@@ -81,7 +81,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap: "815px",
+    gap: "810px",
     marginLeft: "55px",
   },
 
@@ -108,7 +108,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 0,
     display: "flex",
     alignItems: "center",
-    gap: 16,
+    gap: "1.25rem",
   },
 
   nav_links_a: {
@@ -119,28 +119,25 @@ const styles: Record<string, React.CSSProperties> = {
 
   menu_btn: {
     display: "none",
-    border: "1px solid #e5e7eb",
-    background: "#fff",
-    padding: "8px 10px",
-    borderRadius: 8,
+    fontSize: "1.25rem",
+    background: "none",
+    border: "none",
     cursor: "pointer",
   },
 
   mobile_menu: {
-    maxWidth: 1100,
-    margin: "0 auto",
-    padding: "8px 16px 16px",
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: "0.75rem",
+    padding: "12px 16px 16px",
   },
 
   mobile_menu_a: {
     textDecoration: "none",
     color: "#374151",
     fontWeight: 500,
-    padding: "10px 12px",
-    borderRadius: 10,
+    padding: "10px",
+    borderRadius: "8px",
     border: "1px solid #e5e7eb",
   },
 };

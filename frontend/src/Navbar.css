@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 815px;
+  gap: 810px;
   margin-left: 55px;
 }
 
@@ -40,10 +40,10 @@
   padding: 0;
   display: flex;
   align-items: center;
-  gap: 16;
+  gap: 1.25rem;
 }
 
-.nav_links_a {
+.nav_links a {
   text-decoration: none;
   color: #374151;
   font-weight: 500;
@@ -51,28 +51,25 @@
 
 .menu_btn {
   display: none;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  padding: 8px 10px;
-  border-radius: 8;
+  font-size: 1.25rem;
+  background: none;
+  border: none;
   cursor: pointer;
 }
 
 .mobile_menu {
-  max-width: 1100;
-  margin: 0 auto;
-  padding: 8px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8;
+  gap: 0.75rem;
+  padding: 12px 16px 16px;
 }
 
-.mobile_menu_a {
+.mobile_menu a {
   text-decoration: none;
   color: #374151;
   font-weight: 500;
-  padding: 10px 12px;
-  border-radius: 10;
+  padding: 10px;
+  border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
 
