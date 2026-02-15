@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
+import Navbar from "./Navbar";
 
 type PantryItem = {
   id: number;
@@ -26,6 +27,8 @@ function App() {
   };
 
   return (
+    <>
+    <Navbar />
     <main className="pantry-page">
       <div className="background-glow background-glow-left" aria-hidden="true" />
       <div className="background-glow background-glow-right" aria-hidden="true" />
@@ -74,6 +77,7 @@ function App() {
         </ul>
       </section>
     </main>
+    </>
   );
 }
 

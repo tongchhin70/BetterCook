@@ -10,7 +10,7 @@
 
 .pantry-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 92vh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -50,6 +50,7 @@
   padding: 28px;
   text-align: center;
   position: relative;
+  bottom: 15px;
   z-index: 1;
   animation: card-enter 350ms ease-out;
 }
