@@ -9,6 +9,7 @@ const links: NavLink[] = [
   { label: "Recipes", href: "/recipes" },
   { label: "Favorites", href: "/favorites" },
   { label: "About", href: "/about" },
+  { label: "Login", href: "/login" },
 ];
 
 export default function Navbar() {
