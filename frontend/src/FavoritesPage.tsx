@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import Navbar from "./Navbar";
 import "./App.css";
 
 type FavoritesSearch = {
@@ -10,7 +9,7 @@ type FavoritesSearch = {
 
 export default function FavoritesPage() {
   const [itemInput, setItemInput] = useState("");
-  const [items, setItems] = useState<FavoritesSearch[]>([]); {/* Saved for reference. */}
+  const [, setItems] = useState<FavoritesSearch[]>([]);
 
   const handleAddItem = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,11 +27,7 @@ export default function FavoritesPage() {
   */}
 
   return (
-    <>
-      <Navbar />
-      <main className="pantry-page">
-        <div className="background-glow background-glow-left" aria-hidden="true" />
-        <div className="background-glow background-glow-right" aria-hidden="true" />
+    <main className="pantry-page">
         <section className="pantry-card" style={{ textAlign: 'left' }}>
             <p className="eyebrow">Your Favorite Recipes</p>
             <img className="brand-logo" src="/src/assets/logo.png" alt="BetterCook chef logo"
@@ -76,7 +71,6 @@ export default function FavoritesPage() {
             {/* Search goes to another page maybe? */}
           </div>
         </section>
-      </main>
-    </>
+    </main>
   );
 }

@@ -1,13 +1,8 @@
-import Navbar from "./Navbar";
 import "./App.css";
 
 export default function AboutPage() {
   return (
-    <>
-      <Navbar />
-      <main className="pantry-page">
-        <div className="background-glow background-glow-left" aria-hidden="true" />
-        <div className="background-glow background-glow-right" aria-hidden="true" />
+    <main className="pantry-page">
 
         <section className="pantry-card" style={{ textAlign: 'left' }}>
             <p className="eyebrow">The Story</p>
@@ -25,7 +20,6 @@ export default function AboutPage() {
             </p>
             </div>
         </section>
-      </main>
-    </>
+    </main>
   );
 }

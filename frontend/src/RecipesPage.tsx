@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import Navbar from "./Navbar";
 import "./App.css";
 
 type RecipesSearch = {
@@ -10,7 +9,7 @@ type RecipesSearch = {
 
 export default function RecipesPage() {
   const [itemInput, setItemInput] = useState("");
-  const [items, setItems] = useState<RecipesSearch[]>([]); {/* Saved for reference. */}
+  const [, setItems] = useState<RecipesSearch[]>([]);
 
   const handleAddItem = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,11 +27,7 @@ export default function RecipesPage() {
   */}
 
   return (
-    <>
-      <Navbar />
-      <main className="pantry-page">
-        <div className="background-glow background-glow-left" aria-hidden="true" />
-        <div className="background-glow background-glow-right" aria-hidden="true" />
+    <main className="pantry-page">
         <section className="pantry-card" style={{ textAlign: 'left' }}>
             <p className="eyebrow">Your Recipes</p>
             <img className="brand-logo" src="/src/assets/logo.png" alt="BetterCook chef logo"
@@ -76,7 +71,6 @@ export default function RecipesPage() {
             {/* Search goes to another page maybe? */}
           </div>
         </section>
-      </main>
-    </>
+    </main>
   );
 }

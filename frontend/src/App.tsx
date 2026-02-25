@@ -1,15 +1,20 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
 import "./App.css";
-import logo from "./assets/logo.png";
+import AboutPage from "./AboutPage";
+import FavoritesPage from "./FavoritesPage";
+import LoginPage from "./LoginPage";
 import Navbar from "./Navbar";
+import RecipesPage from "./RecipesPage";
 
 type PantryItem = {
   id: number;
   name: string;
 };
 
-function App() {
+function PantryHome() {
   const [itemInput, setItemInput] = useState("");
   const [items, setItems] = useState<PantryItem[]>([]);
 
@@ -27,20 +32,9 @@ function App() {
   };
 
   return (
-    <>
-    <Navbar />
     <main className="pantry-page">
-      <div className="background-glow background-glow-left" aria-hidden="true" />
-      <div className="background-glow background-glow-right" aria-hidden="true" />
-
       <section className="pantry-card" aria-label="Pantry input">
-        <img className="brand-logo" src={logo} alt="BetterCook chef logo" />
-
-        <p className="eyebrow">BetterCook</p>
         <h1>What is in your pantry?</h1>
-        <p className="subtitle">
-          Add a few ingredients and start planning your next meal.
-        </p>
 
         <form className="pantry-form" onSubmit={handleAddItem}>
           <label htmlFor="pantry-item" className="sr-only">
@@ -53,7 +47,7 @@ function App() {
             value={itemInput}
             onChange={(event) => setItemInput(event.target.value)}
           />
-          <button type="submit">Add item</button>
+          <button type="submit">+</button>
         </form>
 
         <ul className="item-list" aria-live="polite">
@@ -77,7 +71,21 @@ function App() {
         </ul>
       </section>
     </main>
-    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<PantryHome />} />
+        <Route path="/recipes" element={<RecipesPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

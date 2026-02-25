@@ -14,8 +14,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(circle at 15% 0%, #ffd8bf 0%, transparent 35%),
-    radial-gradient(circle at 90% 10%, #ffe8d5 0%, transparent 30%), var(--bg);
+  background: #ffede2;
 }
 
 .background-glow {
@@ -68,7 +67,6 @@
   height: 110px;
   margin: 0 auto 12px;
   border-radius: 28px;
-  background: linear-gradient(160deg, #ff9056 0%, #c94a10 100%);
   display: grid;
   place-items: center;
   font-size: 2rem;
@@ -211,11 +209,11 @@ h1 {
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 

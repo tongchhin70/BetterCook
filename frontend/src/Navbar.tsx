@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { Link, NavLink } from "react-router-dom";
+
 import "./Navbar.css";
 import logo from "./assets/logo.png";
 
-type NavLink = { label: string; href: string };
+type NavItem = { label: string; to: string };
 
-const links: NavLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Recipes", href: "/recipes" },
-  { label: "Favorites", href: "/favorites" },
-  { label: "About", href: "/about" },
-  { label: "Login", href: "/login" },
+const links: NavItem[] = [
+  { label: "Home", to: "/" },
+  { label: "Recipes", to: "/recipes" },
+  { label: "Favorites", to: "/favorites" },
+  { label: "About", to: "/about" },
+  { label: "Login", to: "/login" },
 ];
 
 export default function Navbar() {
@@ -17,48 +19,44 @@ export default function Navbar() {
 
   return (
     <header style={styles.navbar}>
-      <nav style={styles.navbar_inner} aria-label="Primary">
-        <img style={styles.navbar_logo} src={logo} alt="BetterCook chef logo" />
-        <a href="/" style={styles.logo}>
+      <nav style={styles.navbarInner} aria-label="Primary">
+        <img style={styles.navbarLogo} src={logo} alt="BetterCook chef logo" />
+        <Link to="/" style={styles.logo}>
           BetterCook
-        </a>
+        </Link>
 
-        {/* Desktop links */}
-        <ul style={styles.nav_links}>
-          {links.map((l) => (
-            <li key={l.href}>
-              <a href={l.href} style={styles.nav_links_a}>
-                {l.label}
-              </a>
+        <ul style={styles.navLinks}>
+          {links.map((link) => (
+            <li key={link.to}>
+              <NavLink to={link.to} style={styles.navLinksA}>
+                {link.label}
+              </NavLink>
             </li>
           ))}
         </ul>
 
-        {/* Mobile button */}
         <button
           type="button"
-
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="mobile-menu"
-          style={styles.menu_btn}
+          style={styles.menuBtn}
         >
           ☰
         </button>
       </nav>
 
-      {/* Mobile menu */}
       {open && (
-        <div id="mobile-menu" style={styles.mobile_menu}>
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              style={styles.mobile_menu_a}
+        <div id="mobile-menu" style={styles.mobileMenu}>
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              style={styles.mobileMenuA}
               onClick={() => setOpen(false)}
             >
-              {l.label}
-            </a>
+              {link.label}
+            </NavLink>
           ))}
         </div>
       )}
@@ -66,7 +64,7 @@ export default function Navbar() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
   navbar: {
     position: "sticky",
     top: 0,
@@ -74,8 +72,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: "1px solid #e5e7eb",
     zIndex: 50,
   },
-
-  navbar_inner: {
+  navbarInner: {
     maxWidth: "1100px",
     margin: "auto",
     padding: "12px 16px",
@@ -85,8 +82,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "810px",
     marginLeft: "55px",
   },
-
-  navbar_logo: {
+  navbarLogo: {
     position: "absolute",
     left: "15px",
     top: "50%",
@@ -95,15 +91,13 @@ const styles: Record<string, React.CSSProperties> = {
     height: "50px",
     objectFit: "contain",
   },
-
   logo: {
     fontWeight: 700,
     fontSize: "1.1rem",
     color: "#111827",
     textDecoration: "none",
   },
-
-  nav_links: {
+  navLinks: {
     listStyle: "none",
     margin: 0,
     padding: 0,
@@ -111,29 +105,25 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: "1.25rem",
   },
-
-  nav_links_a: {
+  navLinksA: {
     textDecoration: "none",
     color: "#374151",
     fontWeight: 500,
   },
-
-  menu_btn: {
+  menuBtn: {
     display: "none",
     fontSize: "1.25rem",
     background: "none",
     border: "none",
     cursor: "pointer",
   },
-
-  mobile_menu: {
+  mobileMenu: {
     display: "flex",
     flexDirection: "column",
     gap: "0.75rem",
     padding: "12px 16px 16px",
   },
-
-  mobile_menu_a: {
+  mobileMenuA: {
     textDecoration: "none",
     color: "#374151",
     fontWeight: 500,
@@ -142,9 +132,3 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid #e5e7eb",
   },
 };
-
-// Simple CSS for responsiveness (drop into globals.css):
-// @media (max-width: 640px) {
-//   ul[style] { display: none !important; }   /* hides desktop links */
-//   button[style] { display: inline-flex !important; } /* shows menu button */
-// }
