@@ -13,24 +13,23 @@ export default function RecipesPage() {
   const [itemInput, setItemInput] = useState("");
   const [, setItems] = useState<RecipesSearch[]>([]);
   const [results, setResults] = useState<RecipesSearch[]>([]);
-
-const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  const value = itemInput.trim();
-  if (!value) return;
-  try {
-    const response = await fetch(
-      `http://localhost:8000/api/pantry/search?q=${encodeURIComponent(value)}`
-    );
-    if (!response.ok) {
-      throw new Error("Search failed");
+  const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = itemInput.trim();
+    if (!value) return;
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/pantry/search?q=${encodeURIComponent(value)}`
+      );
+      if (!response.ok) {
+        throw new Error("Search failed");
+      }
+      const data = await response.json();
+      setResults(data);
+    } catch (error) {
+      console.error(error);
     }
-    const data = await response.json();
-    setResults(data);
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
   {/* Saved for reference.
   const handleRemoveItem = (id: number) => {
