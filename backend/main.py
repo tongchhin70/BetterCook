@@ -168,4 +168,3 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
             detail="Invalid username or password"
         )
     return AuthResponse(message="Login successful", username=username)
-
