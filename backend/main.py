@@ -3,7 +3,7 @@ import os
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Integer, String, create_engine
+from sqlalchemy import Integer, String, create_engine, select
 from sqlalchemy.orm import Mapped, Session, declarative_base, mapped_column, sessionmaker
 
 DATABASE_URL = os.getenv(
@@ -178,3 +178,4 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
         )
 
     return AuthResponse(message="Login successful", username=username)
+
