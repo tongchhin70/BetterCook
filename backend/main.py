@@ -129,7 +129,7 @@ def search_pantry(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB]:
     )
     return query.all()
 
-#AUTH
+#AUTHENTICATION
 
 from db import engine, get_db
 from model import users
