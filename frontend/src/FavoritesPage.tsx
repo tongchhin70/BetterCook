@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import {useState} from "react";
+import type {FormEvent} from "react";
 import "./App.css";
 
 type FavoritesSearch = {
@@ -39,12 +39,12 @@ export default function FavoritesPage() {
 
   return (
     <main className="pantry-page">
-        <section className="pantry-card" style={{ textAlign: 'left' }}>
+        <section className="pantry-card" style={{textAlign: 'left'}}>
             <p className="eyebrow">Your Favorite Recipes</p>
             <img className="brand-logo" src="/src/assets/logo.png" alt="BetterCook chef logo"
-                style={{float: 'right' }} />
+                style={{float: 'right'}} />
             <h1>What Are Your Favorite Recipes?</h1>
-            <div style={{ marginTop: '2rem', color: 'var(--ink)' }}>
+            <div style={{marginTop: '2rem', color: 'var(--ink)'}}>
             <form className="pantry-form" onSubmit={handleSearch}>
               <label htmlFor="pantry-item" className="sr-only">
                 Pantry ingredient
