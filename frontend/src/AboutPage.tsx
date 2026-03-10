@@ -9,7 +9,7 @@ export default function AboutPage() {
                 style={{float: 'right' }} />
             <h1>About BetterCook</h1> 
             <p className="subtitle" style={{ marginTop: '1rem' }}>
-              Created from a to assist the most beginner of cooks
+              Created to assist the most beginner of cooks
               without the need to worry.
             </p>
             <div style={{ marginTop: '2rem', color: 'var(--ink)' }}>
