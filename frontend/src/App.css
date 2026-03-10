@@ -176,8 +176,6 @@ h1 {
   flex-shrink: 0;
 }
 
-/* ─── Food cards section ──────────────────────────────────────────────────── */
-
 .food-cards-section {
   width: min(1100px, 100%);
   z-index: 1;

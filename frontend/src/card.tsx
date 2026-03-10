@@ -1,8 +1,3 @@
-// ─── card.tsx ─────────────────────────────────────────────────────────────────
-// Nutrition: USDA FoodData Central API (DEMO_KEY, no signup needed)
-// Images:    Wikimedia/Wikipedia API (completely free, no key needed)
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type NutritionInfo = {
   name:      string;
@@ -41,8 +36,6 @@ const NUTRIENT_IDS = {
   sodium:   [1093],
 };
 
-// ─── Wikimedia image fetch ────────────────────────────────────────────────────
-
 async function fetchWikimediaImage(query: string): Promise<string> {
   // Search Wikipedia for the food article
   const searchUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
@@ -59,13 +52,11 @@ async function fetchWikimediaImage(query: string): Promise<string> {
     const data = await res.json();
     const pages = data?.query?.pages ?? {};
 
-    // The API returns an object keyed by page ID
     for (const page of Object.values(pages) as any[]) {
       const thumb = page?.thumbnail?.source;
       if (thumb) return thumb;
     }
 
-    // If exact title had no image, try a search to find the right article
     const searchFallbackUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
       action:      "query",
       list:        "search",
@@ -79,7 +70,6 @@ async function fetchWikimediaImage(query: string): Promise<string> {
     const searchData = await searchRes.json();
     const results    = searchData?.query?.search ?? [];
 
-    // Take the first result and fetch its thumbnail
     for (const result of results) {
       const thumbUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
         action:      "query",
@@ -100,13 +90,11 @@ async function fetchWikimediaImage(query: string): Promise<string> {
       }
     }
   } catch {
-    // silently fall through to generic image
+    
   }
 
   return GENERIC_FOOD_IMAGE;
 }
-
-// ─── USDA nutrition fetch ─────────────────────────────────────────────────────
 
 function getNutrientValue(foodNutrients: any[], ids: number[]): number {
   for (const nutrient of foodNutrients) {
@@ -151,7 +139,6 @@ async function fetchUSDANutrition(query: string): Promise<Omit<NutritionInfo, "i
 
   if (foods.length === 0) return placeholder;
 
-  // Prefer the entry whose description most closely matches the query
   const queryLower = query.toLowerCase();
   const best = foods.find((f) =>
     f.description?.toLowerCase().includes(queryLower)
@@ -175,8 +162,6 @@ async function fetchUSDANutrition(query: string): Promise<Omit<NutritionInfo, "i
   };
 }
 
-// ─── NutriBadge ───────────────────────────────────────────────────────────────
-
 function NutriBadge({
   label, value, unit, color,
 }: { label: string; value: number; unit: string; color: string }) {
@@ -192,8 +177,6 @@ function NutriBadge({
     </div>
   );
 }
-
-// ─── FoodCard ─────────────────────────────────────────────────────────────────
 
 export function FoodCard({
   item,
