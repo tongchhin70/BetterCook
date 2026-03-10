@@ -79,7 +79,7 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap: "810px",
+    gap: "765px",
     marginLeft: "55px",
   },
   navbarLogo: {
