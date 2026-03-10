@@ -34,7 +34,7 @@ function PantryHome() {
   return (
     <main className="pantry-page">
       <section className="pantry-card" aria-label="Pantry input">
-        <h1>What is in your pantry?</h1>
+        <h1>What Is In Your Pantry?</h1>
 
         <form className="pantry-form" onSubmit={handleAddItem}>
           <label htmlFor="pantry-item" className="sr-only">
