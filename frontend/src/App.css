@@ -42,7 +42,7 @@
 }
 
 .pantry-card {
-  width: min(560px, 100%);
+  width: min(595px, 100%);
   border-radius: 28px;
   background: linear-gradient(180deg, #fffdfb 0%, var(--card) 100%);
   box-shadow: 0 20px 60px rgba(99, 47, 10, 0.14);
@@ -84,7 +84,7 @@
 }
 
 h1 {
-  margin: 8px 0 8px;
+  margin: 8px 0 2rem;
   font-size: clamp(1.8rem, 2.3vw, 2.4rem);
   color: var(--ink);
   line-height: 1.1;
