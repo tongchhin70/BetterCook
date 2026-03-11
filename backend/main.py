@@ -2,7 +2,7 @@ import os
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Integer, String, create_engine, select
+from sqlalchemy import Integer, String, create_engine, insert, select
 from sqlalchemy.orm import Mapped, Session, declarative_base, mapped_column, sessionmaker
 from sqlalchemy import select
 from sqlalchemy import or_
@@ -133,7 +133,7 @@ def search_pantry(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB]:
 
 from db import engine, get_db
 from model import users
-from schemas import UserCreate, UserLogin
+from schemas import Recipe, RecipeCreate, UserCreate, UserLogin
 
 class AuthResponse(BaseModel):
     message: str
@@ -168,3 +168,4 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
             detail="Invalid username or password"
         )
     return AuthResponse(message="Login successful", username=username)
+
