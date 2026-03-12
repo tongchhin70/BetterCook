@@ -169,3 +169,40 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
         )
     return AuthResponse(message="Login successful", username=username)
 
+# Recipes
+from model import recipes
+
+
+@app.get("/api/recipes", response_model=list[Recipe], tags=["Recipes"])
+def get_recipes(db: Session = Depends(get_db)) -> list[Recipe]:
+    rows = db.execute(select(recipes).order_by(recipes.c.id.asc())).mappings().all()
+    return [Recipe(**dict(row)) for row in rows]
+
+
+@app.post(
+    "/api/recipes",
+    response_model=Recipe,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Recipes"],
+    summary="Add recipe",
+)
+def add_recipes(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
+    row = (
+        db.execute(
+            insert(recipes)
+            .values(
+                name=payload.name.strip(),
+                description=payload.description.strip(),
+                ingredients=payload.ingredients.strip(),
+                instructions=payload.instructions.strip(),
+                prep_time=payload.prep_time,
+                cook_time=payload.cook_time,
+                servings=payload.servings,
+            )
+            .returning(*recipes.c)
+        )
+        .mappings()
+        .one()
+    )
+    db.commit()
+    return Recipe(**dict(row))
