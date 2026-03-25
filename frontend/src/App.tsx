@@ -11,7 +11,6 @@ import RecipesPage from "./RecipesPage";
 import { FoodCard, fetchNutrition } from "./card";
 import type { PantryItem } from "./card";
 
-// ─── PantryHome ───────────────────────────────────────────────────────────────
 
 function PantryHome() {
   const [itemInput, setItemInput] = useState("");
@@ -28,7 +27,6 @@ function PantryHome() {
     setError(null);
 
     try {
-      // If this ingredient already has a card, just bump its quantity
       const existingIndex = items.findIndex(
         (item) => item.name.toLowerCase() === value.toLowerCase()
       );
@@ -46,7 +44,6 @@ function PantryHome() {
         return;
       }
 
-      // New ingredient — fetch nutrition and create a card
       const nutrition = await fetchNutrition(value);
       setItems((prev) => [
         ...prev,
@@ -154,8 +151,6 @@ function PantryHome() {
     </main>
   );
 }
-
-// ─── App ──────────────────────────────────────────────────────────────────────
 
 function App() {
   return (
