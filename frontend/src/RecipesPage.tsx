@@ -19,7 +19,7 @@ export default function RecipesPage() {
     if (!value) return;
     try {
       const response = await fetch(
-        `http://localhost:8000/api/pantry/search?q=${encodeURIComponent(value)}`
+        `http://localhost:8000/api/recipes/search?q=${encodeURIComponent(value)}`
       );
       if (!response.ok) {
         throw new Error("Search failed");
