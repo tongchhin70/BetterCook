@@ -33,6 +33,18 @@ class PantryItem(PantryItemCreate):
     id: int = Field(..., examples=[1])
     model_config = ConfigDict(from_attributes=True)
 
+class RecipesSearchHistory(Base):
+    __tablename__ = "recipes_search_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    query: Mapped[str] = mapped_column(String, nullable=False)
+
+class FavoritesSearchHistory(Base):
+    __tablename__ = "favorites_search_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    query: Mapped[str] = mapped_column(String, nullable=False)
+
 app = FastAPI(
     title="BetterCook API",
     version="1.2.0",
@@ -50,6 +62,7 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    users.metadata.create_all(bind=engine)
 
 def get_db() -> Session:
     db = SessionLocal()
@@ -133,15 +146,11 @@ def search_pantry(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB]:
 
 from db import engine, get_db
 from model import users
-from schemas import Recipe, RecipeCreate, UserCreate, UserLogin
+from schemas import Favorite, Recipe, FavoriteCreate, RecipeCreate, UserCreate, UserLogin
 
 class AuthResponse(BaseModel):
     message: str
     username: str
-
-@app.on_event("startup")
-def on_startup() -> None:
-    users.metadata.create_all(bind=engine)
 
 @app.post("/register", response_model=AuthResponse, tags=["Auth"])
 def register(payload: UserCreate, db: Session = Depends(get_db)) -> AuthResponse:
@@ -172,20 +181,19 @@ def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
 # Recipes
 from model import recipes
 
-
 @app.get("/api/recipes", response_model=list[Recipe], tags=["Recipes"])
 def get_recipes(db: Session = Depends(get_db)) -> list[Recipe]:
     rows = db.execute(select(recipes).order_by(recipes.c.id.asc())).mappings().all()
     return [Recipe(**dict(row)) for row in rows]
-
 
 @app.post(
     "/api/recipes",
     response_model=Recipe,
     status_code=status.HTTP_201_CREATED,
     tags=["Recipes"],
-    summary="Add recipe",
+    summary="Add recipe"
 )
+
 def add_recipes(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
     row = (
         db.execute(
@@ -197,7 +205,7 @@ def add_recipes(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
                 instructions=payload.instructions.strip(),
                 prep_time=payload.prep_time,
                 cook_time=payload.cook_time,
-                servings=payload.servings,
+                servings=payload.servings
             )
             .returning(*recipes.c)
         )
@@ -206,3 +214,137 @@ def add_recipes(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
     )
     db.commit()
     return Recipe(**dict(row))
+
+@app.get(
+    "/api/recipes/recommend",
+    response_model=list[Recipe],
+    tags=["Recipes"]
+)
+
+def recommend_recipes(db: Session = Depends(get_db)) -> list[Recipe]:
+    pantry_items = db.query(PantryItemDB).all()
+    pantry_names = [item.name.lower() for item in pantry_items]
+
+    rows = db.execute(select(recipes)).mappings().all()
+
+    recommended = []
+
+    for row in rows:
+        recipe = dict(row)
+        ingredients = recipe["ingredients"].lower()
+
+        if any(pantry_item in ingredients for pantry_item in pantry_names):
+            recommended.append(Recipe(**recipe))
+
+    return recommended
+
+@app.get(
+    "/api/recipes/search",
+    response_model=list[Recipe],
+    tags=["Recipes"]
+)
+
+def search_recipes(q: str, db: Session = Depends(get_db)) -> list[Recipe]:
+    db.add(RecipesSearchHistory(query=q))
+    db.commit()
+
+    rows = (
+        db.execute(
+            select(recipes).where(recipes.c.name.ilike(f"%{q}%"))
+        )
+        .mappings()
+        .all()
+    )
+
+    return [Recipe(**dict(row)) for row in rows]
+
+@app.get(
+    "/api/recipes/history",
+    tags=["Recipes"]
+)
+
+def get_recipes_history(db: Session = Depends(get_db)):
+    return db.query(RecipesSearchHistory).order_by(RecipesSearchHistory.id.desc()).all()
+
+# Favorite Recipes
+from model import favorites
+
+@app.get("/api/favorites", response_model=list[Favorite], tags=["Favorites"])
+def get_favorites(db: Session = Depends(get_db)) -> list[Favorite]:
+    rows = db.execute(select(favorites).order_by(favorites.c.id.asc())).mappings().all()
+    return [Favorite(**dict(row)) for row in rows]
+
+@app.post(
+    "/api/favorites",
+    response_model=Favorite,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Favorites"],
+    summary="Add favorite"
+)
+
+def add_favorites(payload: FavoriteCreate, db: Session = Depends(get_db)) -> Favorite:
+    row = (
+        db.execute(
+            insert(favorites)
+            .values(
+                name=payload.name.strip(),
+                description=payload.description.strip(),
+                ingredients=payload.ingredients.strip(),
+                instructions=payload.instructions.strip(),
+                prep_time=payload.prep_time,
+                cook_time=payload.cook_time,
+                servings=payload.servings
+            )
+            .returning(*favorites.c)
+        )
+        .mappings()
+        .one()
+    )
+    db.commit()
+    return Favorite(**dict(row))
+
+@app.get(
+    "/api/favorites/recommend",
+    response_model=list[PantryItem],
+    tags=["Favorites"]
+)
+
+def recommend_favorites(db: Session = Depends(get_db)) -> list[PantryItemDB]:
+    history = db.query(FavoritesSearchHistory).all()
+
+    if not history:
+        return []
+
+    keywords = [h.query.lower() for h in history]
+
+    query = db.query(PantryItemDB)
+
+    for word in keywords:
+        query = query.filter(PantryItemDB.name.ilike(f"%{word}%"))
+
+    return query.all()
+
+@app.get(
+    "/api/favorites/search",
+    response_model=list[PantryItem],
+    tags=["Favorites"]
+)
+
+def search_favorites(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB]:
+    db.add(FavoritesSearchHistory(query=q))
+    db.commit()
+
+    return (
+        db.query(PantryItemDB)
+        .filter(PantryItemDB.name.ilike(f"%{q}%"))
+        .order_by(PantryItemDB.id.asc())
+        .all()
+    )
+
+@app.get(
+    "/api/favorites/history",
+    tags=["Favorites"]
+)
+
+def get_favorites_history(db: Session = Depends(get_db)):
+    return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
