@@ -19,7 +19,7 @@ export default function FavoritesPage() {
     if (!value) return;
     try {
       const response = await fetch(
-        `http://localhost:8000/api/pantry/search?q=${encodeURIComponent(value)}`
+        `http://localhost:8000/api/favorites/search?q=${encodeURIComponent(value)}`
       );
       if (!response.ok) {
         throw new Error("Search failed");
@@ -43,7 +43,7 @@ export default function FavoritesPage() {
             <p className="eyebrow">Your Favorite Recipes</p>
             <img className="brand-logo" src="/src/assets/logo.png" alt="BetterCook chef logo"
                 style={{float: 'right'}} />
-            <h1>What Are Your Favorite Recipes?</h1>
+            <h1>What Favorite Recipes Are You Looking For?</h1>
             <div style={{marginTop: '2rem', color: 'var(--ink)'}}>
             <form className="pantry-form" onSubmit={handleSearch}>
               <label htmlFor="pantry-item" className="sr-only">
