@@ -6,10 +6,16 @@ This backend runs in a local virtual environment at:
 
 ## 1) Configure PostgreSQL
 
-Set `DATABASE_URL` before running the API. Example:
+Set `DATABASE_URL` before running the API. Example for this machine:
 
 ```bash
-export DATABASE_URL="postgresql+psycopg2://postgres:postgres@localhost:5432/bettercook"
+export DATABASE_URL="postgresql+psycopg2://tongchhin@localhost:5432/bettercook"
+```
+
+Or keep credentials explicit if needed:
+
+```bash
+export DATABASE_URL="postgresql+psycopg2://<user>:<password>@localhost:5432/bettercook"
 ```
 
 Create the DB once (example):
@@ -33,14 +39,21 @@ pip install -r requirements.txt
 ```bash
 cd /Users/tongchhin/Documents/git_repos/BetterCook/backend
 source .venv/bin/activate
-export DATABASE_URL="postgresql+psycopg2://postgres:postgres@localhost:5432/bettercook"
+export DATABASE_URL="postgresql+psycopg2://tongchhin@localhost:5432/bettercook"
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Compatibility entrypoint also works:
+
+```bash
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## 4) Verify
 
 ```bash
 curl http://localhost:8000/api/pantry
+curl http://localhost:8000/api/recipes
 ```
 
 Swagger UI:

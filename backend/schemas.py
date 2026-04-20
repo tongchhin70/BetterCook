@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class UserCreate(BaseModel):
     username: str
@@ -11,8 +12,8 @@ class UserLogin(BaseModel):
 class RecipeCreate(BaseModel):
     name: str
     description: str
-    ingredients: str
-    instructions: str
+    ingredients: List[str]
+    instructions: List[str]
     prep_time: int
     cook_time: int
     servings: int
