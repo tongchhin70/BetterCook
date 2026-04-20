@@ -17,6 +17,7 @@ class RecipeCreate(BaseModel):
     prep_time: int
     cook_time: int
     servings: int
+    calories: int
 
 class Recipe(RecipeCreate):
     id: int
@@ -29,6 +30,7 @@ class FavoriteCreate(BaseModel):
     prep_time: int
     cook_time: int
     servings: int
+    calories: int
 
 class Favorite(FavoriteCreate):
     id: int
