@@ -20,7 +20,8 @@ recipes = Table(
     Column("instructions", String(255), nullable=False),
     Column("prep_time", Integer, nullable=False),
     Column("cook_time", Integer, nullable=False),
-    Column("servings", Integer, nullable=False)
+    Column("servings", Integer, nullable=False),
+    Column("calories", Integer, nullable=False)
 )
 
 favorites = Table(
@@ -33,5 +34,6 @@ favorites = Table(
     Column("instructions", String(255), nullable=False),
     Column("prep_time", Integer, nullable=False),
     Column("cook_time", Integer, nullable=False),
-    Column("servings", Integer, nullable=False)
+    Column("servings", Integer, nullable=False),
+    Column("calories", Integer, nullable=False)
 )
