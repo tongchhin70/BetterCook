@@ -389,6 +389,7 @@ def search_favorites(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB
 )
 
 def get_favorites_history(db: Session = Depends(get_db)):
+<<<<<<< HEAD
     return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
 
 @app.get(
@@ -403,3 +404,6 @@ def sort_favorites_by_calories_desc(db: Session = Depends(get_db)) -> list[Pantr
         .order_by(PantryItemDB.calories.desc())
         .all()
     )
+=======
+    return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
+>>>>>>> 2b73a30 (backend main)
