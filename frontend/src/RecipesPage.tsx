@@ -4,7 +4,7 @@ import "./App.css";
 import FilterSidebar, { defaultFilters } from "./Filter";
 import type { Filters } from "./Filter";
 
-type RecipesSearch = { id: number; name: string; quantity: number; unit: string };
+type RecipesSearch = { id: number; name: string; quantity: number; unit: string; calories: number };
 
 export default function RecipesPage() {
   const [itemInput, setItemInput] = useState("");
@@ -50,7 +50,7 @@ export default function RecipesPage() {
             ) : (
               results.map((item) => (
                 <li key={item.id} className="item-chip">
-                  <span>{item.name} ({item.quantity} {item.unit})</span>
+                  <span>{item.name} ({item.quantity} {item.unit}) - {item.calories} calories</span>
                 </li>
               ))
             )}
