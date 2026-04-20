@@ -18,20 +18,18 @@ class PantryItemDB(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit: Mapped[str] = mapped_column(String(50), nullable=False)
-
+    calories: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 class PantryItemCreate(BaseModel):
     name: str = Field(..., examples=["Eggs"])
     quantity: int = Field(1, ge=1, examples=[12])
     unit: str = Field("pcs", examples=["pcs"])
-
+    calories: int = Field(0, ge=0, examples=[100])
 
 class PantryItem(PantryItemCreate):
     id: int = Field(..., examples=[1])
-
     model_config = ConfigDict(from_attributes=True)
 
-<<<<<<< HEAD
 class RecipesSearchHistory(Base):
     __tablename__ = "recipes_search_history"
 
@@ -43,18 +41,11 @@ class FavoritesSearchHistory(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     query: Mapped[str] = mapped_column(String, nullable=False)
-=======
-
-class AuthResponse(BaseModel):
-    message: str
-    username: str
-
->>>>>>> 27a7806 (backend update)
 
 app = FastAPI(
     title="BetterCook API",
     version="1.3.0",
-    description="Pantry, auth, and recipes API backed by PostgreSQL.",
+    description="Pantry, auth, and recipes API backed by PostgreSQL."
 )
 
 app.add_middleware(
@@ -62,7 +53,7 @@ app.add_middleware(
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 
@@ -72,12 +63,10 @@ def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     users.metadata.create_all(bind=engine)
 
-
 # Pantry
 @app.get("/api/pantry", response_model=list[PantryItem], tags=["Pantry"])
 def get_pantry(db: Session = Depends(get_db)) -> list[PantryItemDB]:
     return db.query(PantryItemDB).order_by(PantryItemDB.id.asc()).all()
-
 
 @app.post(
     "/api/pantry",
@@ -96,7 +85,6 @@ def add_pantry_item(payload: PantryItemCreate, db: Session = Depends(get_db)) ->
     db.commit()
     db.refresh(item)
     return item
-
 
 @app.put(
     "/api/pantry/{item_id}",
@@ -149,7 +137,6 @@ def search_pantry(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB]:
         .all()
     )
 
-<<<<<<< HEAD
 #AUTH
 
 from db import engine, get_db
@@ -160,10 +147,6 @@ class AuthResponse(BaseModel):
     message: str
     username: str
 
-=======
-
-# Auth
->>>>>>> 27a7806 (backend update)
 @app.post("/register", response_model=AuthResponse, tags=["Auth"])
 def register(payload: UserCreate, db: Session = Depends(get_db)) -> AuthResponse:
     username = payload.username.strip()
@@ -236,12 +219,8 @@ def get_recipes(db: Session = Depends(get_db)) -> list[Recipe]:
     tags=["Recipes"],
     summary="Add recipe"
 )
-<<<<<<< HEAD
 
 def add_recipes(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
-=======
-def add_recipe(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
->>>>>>> 27a7806 (backend update)
     row = (
         db.execute(
             insert(recipes)
@@ -252,7 +231,8 @@ def add_recipe(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
                 instructions=_list_to_db_text(payload.instructions),
                 prep_time=payload.prep_time,
                 cook_time=payload.cook_time,
-                servings=payload.servings
+                servings=payload.servings,
+                calories=payload.calories
             )
             .returning(*recipes.c)
         )
@@ -260,7 +240,6 @@ def add_recipe(payload: RecipeCreate, db: Session = Depends(get_db)) -> Recipe:
         .one()
     )
     db.commit()
-<<<<<<< HEAD
     return Recipe(**dict(row))
 
 @app.get(
@@ -314,6 +293,20 @@ def search_recipes(q: str, db: Session = Depends(get_db)) -> list[Recipe]:
 def get_recipes_history(db: Session = Depends(get_db)):
     return db.query(RecipesSearchHistory).order_by(RecipesSearchHistory.id.desc()).all()
 
+@app.get(
+    "/api/recipes/sort/calories-desc",
+    response_model=list[Recipe],
+    tags=["Recipes"]
+)
+
+def sort_recipes_by_calories_desc(db: Session = Depends(get_db)) -> list[Recipe]:
+    rows = (
+        db.execute(select(recipes).order_by(recipes.c.calories.desc()))
+        .mappings()
+        .all()
+    )
+    return [Recipe(**dict(row)) for row in rows]
+
 # Favorite Recipes
 from model import favorites
 
@@ -341,7 +334,8 @@ def add_favorites(payload: FavoriteCreate, db: Session = Depends(get_db)) -> Fav
                 instructions=payload.instructions.strip(),
                 prep_time=payload.prep_time,
                 cook_time=payload.cook_time,
-                servings=payload.servings
+                servings=payload.servings,
+                calories=payload.calories
             )
             .returning(*favorites.c)
         )
@@ -396,6 +390,16 @@ def search_favorites(q: str, db: Session = Depends(get_db)) -> list[PantryItemDB
 
 def get_favorites_history(db: Session = Depends(get_db)):
     return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
-=======
-    return _row_to_recipe(dict(row))
->>>>>>> 27a7806 (backend update)
+
+@app.get(
+    "/api/favorites/sort/calories-desc",
+    response_model=list[PantryItem],
+    tags=["Favorites"]
+)
+
+def sort_favorites_by_calories_desc(db: Session = Depends(get_db)) -> list[PantryItemDB]:
+    return (
+        db.query(PantryItemDB)
+        .order_by(PantryItemDB.calories.desc())
+        .all()
+    )
