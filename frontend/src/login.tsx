@@ -5,6 +5,6 @@ import LoginPage from './LoginPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <LoginPage/>
+    <LoginPage onLoginSuccess={() => {}} />
   </StrictMode>,
 )
