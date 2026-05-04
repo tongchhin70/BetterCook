@@ -68,6 +68,8 @@ function LoginPage({ onLoginSuccess }: LoginPageProps) {
       <section className="pantry-card">
         <img className="brand-logo" src={logo} alt="BetterCook chef logo" />
         <h1>Login</h1>
+
+
         <p className="subtitle">Sign in to save pantry items to your account.</p>
 
         <form

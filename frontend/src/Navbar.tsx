@@ -14,7 +14,13 @@ const links: NavItem[] = [
   { label: "Login", to: "/login" },
 ];
 
-export default function Navbar() {
+export default function Navbar({
+  username,
+  onLogout,
+}: {
+  username: string | null;
+  onLogout: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,13 +32,22 @@ export default function Navbar() {
         </Link>
 
         <ul style={styles.navLinks}>
-          {links.map((link) => (
+          {links
+            .filter((link) => (username ? link.label !== "Login" : true))
+            .map((link) => (
             <li key={link.to}>
               <NavLink to={link.to} style={styles.navLinksA}>
                 {link.label}
               </NavLink>
             </li>
           ))}
+          {username && (
+            <li>
+              <button type="button" onClick={onLogout} style={styles.logoutBtn}>
+                Logout
+              </button>
+            </li>
+          )}
         </ul>
 
         <button
@@ -48,7 +63,9 @@ export default function Navbar() {
 
       {open && (
         <div id="mobile-menu" style={styles.mobileMenu}>
-          {links.map((link) => (
+          {links
+            .filter((link) => (username ? link.label !== "Login" : true))
+            .map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -58,6 +75,18 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          {username && (
+            <button
+              type="button"
+              style={styles.mobileLogoutBtn}
+              onClick={() => {
+                onLogout();
+                setOpen(false);
+              }}
+            >
+              Logout
+            </button>
+          )}
         </div>
       )}
     </header>
@@ -110,6 +139,15 @@ const styles: Record<string, CSSProperties> = {
     color: "#374151",
     fontWeight: 500,
   },
+  logoutBtn: {
+    border: "1px solid #374151",
+    background: "#fff2e8",
+    color: "#374151",
+    fontWeight: 600,
+    borderRadius: "8px",
+    padding: "6px 12px",
+    cursor: "pointer",
+  },
   menuBtn: {
     display: "none",
     fontSize: "1.25rem",
@@ -130,5 +168,16 @@ const styles: Record<string, CSSProperties> = {
     padding: "10px",
     borderRadius: "8px",
     border: "1px solid #e5e7eb",
+  },
+  mobileLogoutBtn: {
+    textDecoration: "none",
+    color: "#374151",
+    fontWeight: 600,
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #374151",
+    background: "#fff2e8",
+    cursor: "pointer",
+    textAlign: "left",
   },
 };

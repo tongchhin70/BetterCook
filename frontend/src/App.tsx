@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
 
 import "./App.css";
 import AboutPage from "./AboutPage";
@@ -333,14 +333,21 @@ function PantryHome({ username }: { username: string | null }) {
   );
 }
 
-function App() {
+function AppShell() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState<string | null>(() =>
     localStorage.getItem("bettercook_username")
   );
 
+  const handleLogout = () => {
+    localStorage.removeItem("bettercook_username");
+    setUsername(null);
+    navigate("/login");
+  };
+
   return (
-    <BrowserRouter>
-      <Navbar />
+    <>
+      <Navbar username={username} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<PantryHome username={username} />} />
         <Route path="/recipes" element={<RecipesPage />} />
@@ -348,6 +355,14 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage onLoginSuccess={setUsername} />} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
     </BrowserRouter>
   );
 }

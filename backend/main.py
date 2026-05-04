@@ -66,30 +66,88 @@ app.add_middleware(
 )
 
 
-def _ensure_pantry_user_column() -> None:
+def _ensure_pantry_columns() -> None:
     inspector = inspect(engine)
     if "pantry_items" not in inspector.get_table_names():
         return
 
     cols = {col["name"] for col in inspector.get_columns("pantry_items")}
-    if "user_id" in cols:
-        return
-
     with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE pantry_items ADD COLUMN user_id INTEGER"))
+        if "user_id" not in cols:
+            conn.execute(text("ALTER TABLE pantry_items ADD COLUMN user_id INTEGER"))
+        if "calories" not in cols:
+            conn.execute(text("ALTER TABLE pantry_items ADD COLUMN calories INTEGER NOT NULL DEFAULT 0"))
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     users.metadata.create_all(bind=engine)
-    _ensure_pantry_user_column()
+    _ensure_pantry_columns()
+
+
+# Auth
+@app.post("/register", response_model=AuthResponse, tags=["Auth"])
+def register(payload: UserCreate, db: Session = Depends(get_db)) -> AuthResponse:
+    username = payload.username.strip()
+    password = payload.password
+
+    existing_user = db.execute(select(users.c.id).where(users.c.username == username)).first()
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already exists",
+        )
+
+    db.execute(insert(users).values(username=username, password=password))
+    db.commit()
+    return AuthResponse(message="User registered", username=username)
+
+
+@app.post("/login", response_model=AuthResponse, tags=["Auth"])
+def login(payload: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
+    username = payload.username.strip()
+    password = payload.password
+
+    user = db.execute(
+        select(users.c.username, users.c.password).where(users.c.username == username)
+    ).first()
+    if user is None or user._mapping["password"] != password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    return AuthResponse(message="Login successful", username=username)
+
+
+def get_current_user_id(
+    x_username: Optional[str] = Header(default=None, alias="X-Username"),
+    db: Session = Depends(get_db),
+) -> int:
+    username = (x_username or "").strip()
+    if not username:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required")
+
+    row = db.execute(select(users.c.id).where(users.c.username == username)).first()
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
+
+    return int(row._mapping["id"])
 
 
 # Pantry
 @app.get("/api/pantry", response_model=list[PantryItem], tags=["Pantry"])
-def get_pantry(db: Session = Depends(get_db)) -> list[PantryItemDB]:
-    return db.query(PantryItemDB).order_by(PantryItemDB.id.asc()).all()
+def get_pantry(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> list[PantryItemDB]:
+    return (
+        db.query(PantryItemDB)
+        .filter(PantryItemDB.user_id == user_id)
+        .order_by(PantryItemDB.id.asc())
+        .all()
+    )
 
 @app.post(
     "/api/pantry",
@@ -108,6 +166,7 @@ def add_pantry_item(
         name=payload.name.strip(),
         quantity=payload.quantity,
         unit=payload.unit.strip(),
+        calories=payload.calories,
     )
     db.add(item)
     db.commit()
@@ -133,6 +192,7 @@ def update_pantry_item(
     item.name = payload.name.strip()
     item.quantity = payload.quantity
     item.unit = payload.unit.strip()
+    item.calories = payload.calories
     db.commit()
     db.refresh(item)
     return item
@@ -335,20 +395,4 @@ def search_favorites(q: str, db: Session = Depends(get_db)) -> List[PantryItemDB
 
 @app.get("/api/favorites/history", tags=["Favorites"])
 def get_favorites_history(db: Session = Depends(get_db)):
-<<<<<<< HEAD
-    return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
-
-@app.get(
-    "/api/favorites/sort/calories-desc",
-    response_model=list[PantryItem],
-    tags=["Favorites"]
-)
-
-def sort_favorites_by_calories_desc(db: Session = Depends(get_db)) -> list[PantryItemDB]:
-    return (
-        db.query(PantryItemDB)
-        .order_by(PantryItemDB.calories.desc())
-        .all()
-    )
-=======
     return db.query(FavoritesSearchHistory).order_by(FavoritesSearchHistory.id.desc()).all()
