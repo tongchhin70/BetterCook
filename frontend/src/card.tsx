@@ -1,6 +1,5 @@
 // ─── card.tsx ─────────────────────────────────────────────────────────────────
 // Nutrition: USDA FoodData Central (DEMO_KEY)
-// Images:    TheMealDB first, Wikipedia as fallback if TheMealDB has no match
 // Name:      Always shows exactly what the user typed
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -8,13 +7,15 @@
 export type NutritionInfo = {
   name:      string;
   unit:      string;
-  image_url: string;
   calories:  number;
   protein:   number;
   carbs:     number;
   fat:       number;
   fiber:     number;
+  sugar:     number;
   sodium:    number;
+  source:    "BetterCook Database" | "USDA API" | "Unknown";
+  icon?:     string;
 };
 
 export type PantryItem = {
@@ -23,96 +24,6 @@ export type PantryItem = {
   quantity:  number;
   nutrition: NutritionInfo;
 };
-
-// ─── TheMealDB image ──────────────────────────────────────────────────────────
-
-function getMealDbUrl(ingredient: string): string {
-  const formatted = ingredient
-    .trim()
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join("_");
-  return `https://www.themealdb.com/images/ingredients/${formatted}-Small.png`;
-}
-
-// Check if TheMealDB actually has an image for this ingredient.
-// If it returns the generic flour placeholder (or errors), we know it doesn't.
-async function getMealDbImage(ingredient: string): Promise<string | null> {
-  const url = getMealDbUrl(ingredient);
-  try {
-    const res = await fetch(url, { method: "HEAD" });
-    // TheMealDB returns 200 for known ingredients, 404 for unknown
-    if (res.ok) return url;
-  } catch { /* network error */ }
-  return null;
-}
-
-// ─── Wikipedia image fallback ─────────────────────────────────────────────────
-
-const GENERIC_IMAGE =
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/480px-Good_Food_Display_-_NCI_Visuals_Online.jpg";
-
-async function getWikipediaImage(query: string): Promise<string> {
-  try {
-    // Try the exact page title first
-    const directUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
-      action:      "query",
-      titles:      query,
-      prop:        "pageimages",
-      format:      "json",
-      pithumbsize: "480",
-      origin:      "*",
-    });
-
-    const directRes  = await fetch(directUrl);
-    const directData = await directRes.json();
-    for (const page of Object.values(directData?.query?.pages ?? {}) as any[]) {
-      if (page?.thumbnail?.source) return page.thumbnail.source;
-    }
-
-    // Fall back to searching Wikipedia for "{query} food"
-    const searchUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
-      action:   "query",
-      list:     "search",
-      srsearch: `${query} food`,
-      srlimit:  "5",
-      format:   "json",
-      origin:   "*",
-    });
-
-    const searchRes  = await fetch(searchUrl);
-    const searchData = await searchRes.json();
-    const results: any[] = searchData?.query?.search ?? [];
-
-    for (const result of results) {
-      const thumbUrl = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
-        action:      "query",
-        titles:      result.title,
-        prop:        "pageimages",
-        format:      "json",
-        pithumbsize: "480",
-        origin:      "*",
-      });
-      const thumbRes  = await fetch(thumbUrl);
-      const thumbData = await thumbRes.json();
-      for (const page of Object.values(thumbData?.query?.pages ?? {}) as any[]) {
-        if ((page as any)?.thumbnail?.source) return (page as any).thumbnail.source;
-      }
-    }
-  } catch { /* silently fall through */ }
-
-  return GENERIC_IMAGE;
-}
-
-// ─── Combined image fetch ─────────────────────────────────────────────────────
-// Try TheMealDB first (instant URL, great for raw ingredients).
-// Fall back to Wikipedia for anything TheMealDB doesn't cover (pizza, soup, etc.)
-
-async function getImage(ingredient: string): Promise<string> {
-  const mealDbUrl = await getMealDbImage(ingredient);
-  if (mealDbUrl) return mealDbUrl;
-  return getWikipediaImage(ingredient);
-}
 
 // ─── USDA nutrition ───────────────────────────────────────────────────────────
 
@@ -149,11 +60,7 @@ export async function fetchNutrition(query: string): Promise<NutritionInfo> {
     requireAllWords: "false",
   });
 
-  // Run image fetch and nutrition fetch in parallel
-  const [image_url, nutritionRes] = await Promise.all([
-    getImage(query),
-    fetch(`${USDA_SEARCH}?${params}`),
-  ]);
+  const nutritionRes = await fetch(`${USDA_SEARCH}?${params}`);
 
   if (!nutritionRes.ok) throw new Error("Could not reach the nutrition database. Too many requests.");
 
@@ -181,13 +88,14 @@ export async function fetchNutrition(query: string): Promise<NutritionInfo> {
   return {
     name:      displayName,
     unit:      servingSize,
-    image_url,
     calories:  Math.round(getNutrientValue(nutrients, NUTRIENT_IDS.calories)),
     protein:   +getNutrientValue(nutrients, NUTRIENT_IDS.protein).toFixed(1),
     carbs:     +getNutrientValue(nutrients, NUTRIENT_IDS.carbs).toFixed(1),
     fat:       +getNutrientValue(nutrients, NUTRIENT_IDS.fat).toFixed(1),
     fiber:     +getNutrientValue(nutrients, NUTRIENT_IDS.fiber).toFixed(1),
+    sugar:     0,
     sodium:    +getNutrientValue(nutrients, NUTRIENT_IDS.sodium).toFixed(1),
+    source:    "USDA API",
   };
 }
 
@@ -222,38 +130,35 @@ export function FoodCard({
 }) {
   const q = item.quantity;
   const n = item.nutrition;
+  const decreaseDisabled = q <= 1;
 
   return (
     <div className="food-card">
-      <div className="food-card-img-wrap">
-        <img
-          src={n.image_url}
-          alt={item.name}
-          className="food-card-img"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = GENERIC_IMAGE;
-          }}
-        />
-        <button
-          type="button"
-          className="food-card-remove"
-          onClick={() => onRemove(item.id)}
-          aria-label={`Remove ${item.name}`}
-        >×</button>
-        <span className="food-card-unit-badge">per {n.unit}</span>
-      </div>
-
       <div className="food-card-body">
         <div className="food-card-header">
-          <h3 className="food-card-name">{item.name}</h3>
-          <div className="qty-control">
-            <button type="button" className="qty-btn"
-              onClick={() => onQuantityChange(item.id, -1)}>−</button>
-            <span className="qty-value">{q}</span>
-            <button type="button" className="qty-btn"
-              onClick={() => onQuantityChange(item.id, 1)}>+</button>
+          <div className="food-card-title-wrap">
+            <h3 className="food-card-name">{item.name}</h3>
+          </div>
+          <div className="food-card-actions">
+            <div className="qty-control">
+              <button type="button" className="qty-btn"
+                onClick={() => onQuantityChange(item.id, -1)}
+                disabled={decreaseDisabled}
+                aria-label={`Decrease ${item.name} quantity`}>−</button>
+              <span className="qty-value">{q}</span>
+              <button type="button" className="qty-btn"
+                onClick={() => onQuantityChange(item.id, 1)}
+                aria-label={`Increase ${item.name} quantity`}>+</button>
+            </div>
+            <button
+              type="button"
+              className="food-card-remove"
+              onClick={() => onRemove(item.id)}
+              aria-label={`Remove ${item.name}`}
+            >×</button>
           </div>
         </div>
+        <span className="food-card-unit-badge">per {n.unit}</span>
 
         <div className="food-card-calories">
           <span className="cal-number">{Math.round(n.calories * q)}</span>

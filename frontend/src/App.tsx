@@ -10,6 +10,8 @@ import Navbar from "./Navbar";
 import RecipesPage from "./RecipesPage";
 import { FoodCard, fetchNutrition } from "./card";
 import type { NutritionInfo, PantryItem } from "./card";
+import { nutritionFromPantryFood, searchPantryFoods } from "./api/pantryFoods";
+import type { PantryFood } from "./api/pantryFoods";
 
 const API_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
@@ -24,22 +26,39 @@ function fallbackNutrition(name: string): NutritionInfo {
   return {
     name,
     unit: "100g",
-    image_url:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/480px-Good_Food_Display_-_NCI_Visuals_Online.jpg",
     calories: 0,
     protein: 0,
     carbs: 0,
     fat: 0,
     fiber: 0,
+    sugar: 0,
     sodium: 0,
+    source: "Unknown",
   };
+}
+
+async function fetchBetterCookNutrition(name: string): Promise<NutritionInfo | null> {
+  const foods = await searchPantryFoods(name);
+  const query = name.toLowerCase();
+  const exactFood = foods.find((food) =>
+    food.name.toLowerCase() === query || food.aliases.some((alias) => alias.toLowerCase() === query)
+  );
+  const food = exactFood ?? foods[0];
+  return food ? nutritionFromPantryFood(food) : null;
+}
+
+async function fetchNutritionWithFallback(name: string): Promise<NutritionInfo> {
+  const betterCookNutrition = await fetchBetterCookNutrition(name);
+  if (betterCookNutrition) return betterCookNutrition;
+
+  return fetchNutrition(name);
 }
 
 async function hydratePantryItems(items: BackendPantryItem[]): Promise<PantryItem[]> {
   const hydrated = await Promise.all(
     items.map(async (item) => {
       try {
-        const nutrition = await fetchNutrition(item.name);
+        const nutrition = await fetchNutritionWithFallback(item.name);
         return { id: item.id, name: item.name, quantity: item.quantity, nutrition };
       } catch {
         return {
@@ -58,7 +77,10 @@ async function hydratePantryItems(items: BackendPantryItem[]): Promise<PantryIte
 function PantryHome({ username }: { username: string | null }) {
   const [itemInput, setItemInput] = useState("");
   const [items, setItems] = useState<PantryItem[]>([]);
+  const [foodSuggestions, setFoodSuggestions] = useState<PantryFood[]>([]);
+  const [selectedFood, setSelectedFood] = useState<PantryFood | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchingFoods, setSearchingFoods] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,6 +117,27 @@ function PantryHome({ username }: { username: string | null }) {
     void loadPantry();
   }, [username]);
 
+  useEffect(() => {
+    const value = itemInput.trim();
+    if (value.length < 2) {
+      setFoodSuggestions([]);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      setSearchingFoods(true);
+      try {
+        setFoodSuggestions(await searchPantryFoods(value));
+      } catch {
+        setFoodSuggestions([]);
+      } finally {
+        setSearchingFoods(false);
+      }
+    }, 180);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [itemInput]);
+
   const handleAddItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const value = itemInput.trim();
@@ -109,7 +152,17 @@ function PantryHome({ username }: { username: string | null }) {
     setError(null);
 
     try {
-      const existing = items.find((item) => item.name.toLowerCase() === value.toLowerCase());
+      let selectedNutrition: NutritionInfo;
+      try {
+        selectedNutrition =
+          selectedFood && selectedFood.name.toLowerCase() === value.toLowerCase()
+            ? nutritionFromPantryFood(selectedFood)
+            : await fetchNutritionWithFallback(value);
+      } catch {
+        selectedNutrition = fallbackNutrition(value);
+      }
+      const itemName = selectedNutrition.name;
+      const existing = items.find((item) => item.name.toLowerCase() === itemName.toLowerCase());
 
       if (existing) {
         const updatedQty = existing.quantity + 1;
@@ -119,7 +172,7 @@ function PantryHome({ username }: { username: string | null }) {
             "Content-Type": "application/json",
             "X-Username": username,
           },
-          body: JSON.stringify({ name: existing.name, quantity: updatedQty, unit: "pcs" }),
+          body: JSON.stringify({ name: existing.name, quantity: updatedQty, unit: "pcs", calories: existing.nutrition.calories }),
         });
 
         if (!response.ok) {
@@ -132,6 +185,8 @@ function PantryHome({ username }: { username: string | null }) {
           )
         );
         setItemInput("");
+        setSelectedFood(null);
+        setFoodSuggestions([]);
         return;
       }
 
@@ -141,7 +196,7 @@ function PantryHome({ username }: { username: string | null }) {
           "Content-Type": "application/json",
           "X-Username": username,
         },
-        body: JSON.stringify({ name: value, quantity: 1, unit: "pcs" }),
+        body: JSON.stringify({ name: itemName, quantity: 1, unit: "pcs", calories: selectedNutrition.calories }),
       });
 
       if (!response.ok) {
@@ -150,23 +205,18 @@ function PantryHome({ username }: { username: string | null }) {
 
       const createdItem: BackendPantryItem = await response.json();
 
-      let nutrition: NutritionInfo;
-      try {
-        nutrition = await fetchNutrition(createdItem.name);
-      } catch {
-        nutrition = fallbackNutrition(createdItem.name);
-      }
-
       setItems((prev) => [
         ...prev,
         {
           id: createdItem.id,
           name: createdItem.name,
           quantity: createdItem.quantity,
-          nutrition,
+          nutrition: selectedNutrition,
         },
       ]);
       setItemInput("");
+      setSelectedFood(null);
+      setFoodSuggestions([]);
     } catch {
       setError("Could not save pantry item.");
     } finally {
@@ -216,7 +266,7 @@ function PantryHome({ username }: { username: string | null }) {
           "Content-Type": "application/json",
           "X-Username": username,
         },
-        body: JSON.stringify({ name: target.name, quantity: updatedQty, unit: "pcs" }),
+        body: JSON.stringify({ name: target.name, quantity: updatedQty, unit: "pcs", calories: target.nutrition.calories }),
       });
 
       if (!response.ok) {
@@ -233,14 +283,16 @@ function PantryHome({ username }: { username: string | null }) {
     }
   };
 
-  const totals = items.reduce(
-    (acc, item) => ({
-      calories: acc.calories + item.nutrition.calories * item.quantity,
-      protein: acc.protein + item.nutrition.protein * item.quantity,
-      carbs: acc.carbs + item.nutrition.carbs * item.quantity,
-      fat: acc.fat + item.nutrition.fat * item.quantity,
+  const pantryTotals = items.reduce(
+    (totals, item) => ({
+      calories: totals.calories + item.nutrition.calories * item.quantity,
+      protein: totals.protein + item.nutrition.protein * item.quantity,
+      carbs: totals.carbs + item.nutrition.carbs * item.quantity,
+      fat: totals.fat + item.nutrition.fat * item.quantity,
+      fiber: totals.fiber + item.nutrition.fiber * item.quantity,
+      sodium: totals.sodium + item.nutrition.sodium * item.quantity,
     }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 }
   );
 
   if (!username) {
@@ -277,7 +329,10 @@ function PantryHome({ username }: { username: string | null }) {
             type="text"
             placeholder="e.g. egg, banana, chicken…"
             value={itemInput}
-            onChange={(e) => setItemInput(e.target.value)}
+            onChange={(e) => {
+              setItemInput(e.target.value);
+              setSelectedFood(null);
+            }}
             autoComplete="off"
             disabled={loading}
           />
@@ -286,28 +341,62 @@ function PantryHome({ username }: { username: string | null }) {
           </button>
         </form>
 
+        {(searchingFoods || foodSuggestions.length > 0) && (
+          <div className="pantry-food-suggestions" aria-live="polite">
+            {searchingFoods && <p>Searching BetterCook Database...</p>}
+            {foodSuggestions.map((food) => (
+              <button
+                type="button"
+                key={food.id}
+                onClick={() => {
+                  setSelectedFood(food);
+                  setItemInput(food.name);
+                  setFoodSuggestions([]);
+                }}
+              >
+                <span className="pantry-food-icon">{food.imageEmoji}</span>
+                <span>
+                  <strong>{food.name}</strong>
+                  <small>{food.category} · {food.calories} kcal per {food.defaultServingSize}{food.servingUnit}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedFood && (
+          <p className="nutrition-source-hint">
+            Using BetterCook Database nutrition for {selectedFood.name}.
+          </p>
+        )}
+
         {error && <p className="error-msg">{error}</p>}
 
         {items.length > 0 && (
-          <div className="totals-bar">
-            <div className="totals-item">
-              <span className="totals-number">{Math.round(totals.calories)}</span>
-              <span className="totals-label">kcal</span>
+          <div className="pantry-summary" aria-label="Total pantry nutrition">
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{Math.round(pantryTotals.calories)}</span>
+              <span className="pantry-summary-label">kcal</span>
             </div>
-            <div className="totals-sep" />
-            <div className="totals-item">
-              <span className="totals-number">{totals.protein.toFixed(1)}g</span>
-              <span className="totals-label">protein</span>
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{pantryTotals.protein.toFixed(1)}g</span>
+              <span className="pantry-summary-label">protein</span>
             </div>
-            <div className="totals-sep" />
-            <div className="totals-item">
-              <span className="totals-number">{totals.carbs.toFixed(1)}g</span>
-              <span className="totals-label">carbs</span>
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{pantryTotals.carbs.toFixed(1)}g</span>
+              <span className="pantry-summary-label">carbs</span>
             </div>
-            <div className="totals-sep" />
-            <div className="totals-item">
-              <span className="totals-number">{totals.fat.toFixed(1)}g</span>
-              <span className="totals-label">fat</span>
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{pantryTotals.fat.toFixed(1)}g</span>
+              <span className="pantry-summary-label">fat</span>
+            </div>
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{pantryTotals.fiber.toFixed(1)}g</span>
+              <span className="pantry-summary-label">fiber</span>
+            </div>
+            <div className="pantry-summary-item">
+              <span className="pantry-summary-value">{Math.round(pantryTotals.sodium)}mg</span>
+              <span className="pantry-summary-label">sodium</span>
             </div>
           </div>
         )}
@@ -351,6 +440,7 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<PantryHome username={username} />} />
         <Route path="/recipes" element={<RecipesPage />} />
+        <Route path="/recipes/:recipeId" element={<RecipesPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage onLoginSuccess={setUsername} />} />

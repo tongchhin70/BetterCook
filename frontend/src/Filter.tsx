@@ -1,10 +1,15 @@
 import "./Filter.css";
 
+export type MealType = "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Dessert";
+export type CookTimeFilter = "Under 15 minutes" | "15-30 minutes" | "30-60 minutes" | "Over 60 minutes";
+export type Difficulty = "Easy" | "Medium" | "Hard";
+export type Dietary = "Vegetarian" | "Vegan" | "Gluten-Free" | "High-Protein" | "Low-Carb" | "Dairy-Free";
+
 export type Filters = {
-  mealType:   string[];
-  cookTime:   string[];
-  difficulty: string[];
-  dietary:    string[];
+  mealType:   MealType[];
+  cookTime:   CookTimeFilter[];
+  difficulty: Difficulty[];
+  dietary:    Dietary[];
 };
 
 export const defaultFilters: Filters = {
@@ -14,28 +19,41 @@ export const defaultFilters: Filters = {
   dietary:    [],
 };
 
-const MEAL_TYPES   = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"];
-const COOK_TIMES   = ["Under 15 min", "15–30 min", "30–60 min", "Over 60 min"];
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
-const DIETARY      = ["Vegetarian", "Vegan", "Gluten-free", "Dairy-free"];
+const MEAL_TYPES: MealType[] = ["Breakfast", "Lunch", "Dinner", "Snack", "Dessert"];
+const COOK_TIMES: CookTimeFilter[] = ["Under 15 minutes", "15-30 minutes", "30-60 minutes", "Over 60 minutes"];
+const DIFFICULTIES: Difficulty[] = ["Easy", "Medium", "Hard"];
+const DIETARY: Dietary[] = ["Vegetarian", "Vegan", "Gluten-Free", "High-Protein", "Low-Carb", "Dairy-Free"];
 
 type Props = {
   filters:  Filters;
   onChange: (f: Filters) => void;
 };
 
+export function hasActiveFilters(filters: Filters): boolean {
+  return Object.values(filters).some((values) => values.length > 0);
+}
+
 export default function FilterSidebar({ filters, onChange }: Props) {
-  const toggle = (field: keyof Filters, value: string) => {
+  const toggle = <K extends keyof Filters>(field: K, value: Filters[K][number]) => {
     const arr = filters[field];
     onChange({
       ...filters,
-      [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+      [field]: arr.includes(value as never)
+        ? arr.filter((v) => v !== value)
+        : [...arr, value],
     });
   };
 
+  const clearFilters = () => onChange(defaultFilters);
+
   return (
     <aside className="filter-sidebar">
-      <span className="filter-sidebar-title">Filters</span>
+      <div className="filter-sidebar-header">
+        <span className="filter-sidebar-title">Filters</span>
+        <button type="button" className="filter-clear" onClick={clearFilters} disabled={!hasActiveFilters(filters)}>
+          Clear
+        </button>
+      </div>
 
       <div className="filter-section">
         <p className="filter-section-title">Meal Type</p>
