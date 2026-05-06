@@ -9,7 +9,6 @@ type NavItem = { label: string; to: string };
 const links: NavItem[] = [
   { label: "Home", to: "/" },
   { label: "Recipes", to: "/recipes" },
-  { label: "Favorites", to: "/favorites" },
   { label: "About", to: "/about" },
   { label: "Login", to: "/login" },
 ];

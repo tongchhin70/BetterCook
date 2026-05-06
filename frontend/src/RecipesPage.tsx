@@ -7,7 +7,19 @@ import type { CookTimeFilter, Filters } from "./Filter";
 import { getRecipes, searchRecipes } from "./api/recipes";
 import type { Recipe } from "./types/recipes";
 
-function RecipeCard({ recipe, onSelect }: { recipe: Recipe; onSelect: (recipe: Recipe) => void }) {
+const FAVORITES_STORAGE_KEY = "bettercook_favorite_recipe_ids";
+
+function RecipeCard({
+  recipe,
+  isFavorite,
+  onSelect,
+  onToggleFavorite,
+}: {
+  recipe: Recipe;
+  isFavorite: boolean;
+  onSelect: (recipe: Recipe) => void;
+  onToggleFavorite: (recipeId: number) => void;
+}) {
   const visibleIngredients = recipe.ingredients.slice(0, 4);
   const remainingIngredients = recipe.ingredients.length - visibleIngredients.length;
 
@@ -27,6 +39,19 @@ function RecipeCard({ recipe, onSelect }: { recipe: Recipe; onSelect: (recipe: R
       onKeyDown={handleKeyDown}
       aria-label={`Open ${recipe.name} recipe details`}
     >
+      <button
+        type="button"
+        className={isFavorite ? "recipe-favorite-btn recipe-favorite-btn-active" : "recipe-favorite-btn"}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleFavorite(recipe.id);
+        }}
+        aria-label={isFavorite ? `Remove ${recipe.name} from favorites` : `Add ${recipe.name} to favorites`}
+        aria-pressed={isFavorite}
+      >
+        {isFavorite ? "♥" : "♡"}
+      </button>
+
       <div className="recipe-card-topline">
         <span>{recipe.totalTime} min</span>
         <span>{recipe.servings} servings</span>
@@ -340,7 +365,7 @@ function isInCookTimeRange(totalTime: number, filter: CookTimeFilter): boolean {
   }
 }
 
-function recipeMatchesFilters(recipe: Recipe, filters: Filters): boolean {
+function recipeMatchesFilters(recipe: Recipe, filters: Filters, favoriteRecipeIds: Set<number>): boolean {
   const matchesMealType =
     filters.mealType.length === 0 || filters.mealType.includes(recipe.mealType);
   const matchesCookTime =
@@ -349,8 +374,10 @@ function recipeMatchesFilters(recipe: Recipe, filters: Filters): boolean {
     filters.difficulty.length === 0 || filters.difficulty.includes(recipe.difficulty);
   const matchesDietary =
     filters.dietary.length === 0 || filters.dietary.every((filter) => recipe.dietary.includes(filter));
+  const matchesFavorites =
+    !filters.favorites || favoriteRecipeIds.has(recipe.id);
 
-  return matchesMealType && matchesCookTime && matchesDifficulty && matchesDietary;
+  return matchesMealType && matchesCookTime && matchesDifficulty && matchesDietary && matchesFavorites;
 }
 
 export default function RecipesPage() {
@@ -359,12 +386,22 @@ export default function RecipesPage() {
   const [itemInput, setItemInput] = useState("");
   const [results, setResults] = useState<Recipe[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [favoriteRecipeIds, setFavoriteRecipeIds] = useState<Set<number>>(() => {
+    const storedIds = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    if (!storedIds) return new Set<number>();
+
+    try {
+      return new Set<number>(JSON.parse(storedIds));
+    } catch {
+      return new Set<number>();
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const filteredResults = useMemo(
-    () => results.filter((recipe) => recipeMatchesFilters(recipe, filters)),
-    [results, filters]
+    () => results.filter((recipe) => recipeMatchesFilters(recipe, filters, favoriteRecipeIds)),
+    [results, filters, favoriteRecipeIds]
   );
 
   const selectedRecipe = useMemo(
@@ -389,6 +426,10 @@ export default function RecipesPage() {
     void loadRecipes();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favoriteRecipeIds]));
+  }, [favoriteRecipeIds]);
+
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const value = itemInput.trim();
@@ -412,6 +453,18 @@ export default function RecipesPage() {
 
   const handleBackToRecipes = () => {
     navigate("/recipes");
+  };
+
+  const handleToggleFavorite = (recipeId: number) => {
+    setFavoriteRecipeIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      if (nextIds.has(recipeId)) {
+        nextIds.delete(recipeId);
+      } else {
+        nextIds.add(recipeId);
+      }
+      return nextIds;
+    });
   };
 
   return (
@@ -446,7 +499,13 @@ export default function RecipesPage() {
                 </p>
               ) : (
                 filteredResults.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} onSelect={handleSelectRecipe} />
+                  <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    isFavorite={favoriteRecipeIds.has(recipe.id)}
+                    onSelect={handleSelectRecipe}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
                 ))
               )}
             </div>

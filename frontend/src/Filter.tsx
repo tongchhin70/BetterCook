@@ -10,6 +10,7 @@ export type Filters = {
   cookTime:   CookTimeFilter[];
   difficulty: Difficulty[];
   dietary:    Dietary[];
+  favorites:  boolean;
 };
 
 export const defaultFilters: Filters = {
@@ -17,6 +18,7 @@ export const defaultFilters: Filters = {
   cookTime:   [],
   difficulty: [],
   dietary:    [],
+  favorites:  false,
 };
 
 const MEAL_TYPES: MealType[] = ["Breakfast", "Lunch", "Dinner", "Snack", "Dessert"];
@@ -29,12 +31,20 @@ type Props = {
   onChange: (f: Filters) => void;
 };
 
+type FilterListKey = Exclude<keyof Filters, "favorites">;
+
 export function hasActiveFilters(filters: Filters): boolean {
-  return Object.values(filters).some((values) => values.length > 0);
+  return (
+    filters.mealType.length > 0 ||
+    filters.cookTime.length > 0 ||
+    filters.difficulty.length > 0 ||
+    filters.dietary.length > 0 ||
+    filters.favorites
+  );
 }
 
 export default function FilterSidebar({ filters, onChange }: Props) {
-  const toggle = <K extends keyof Filters>(field: K, value: Filters[K][number]) => {
+  const toggle = <K extends FilterListKey>(field: K, value: Filters[K][number]) => {
     const arr = filters[field];
     onChange({
       ...filters,
@@ -53,6 +63,18 @@ export default function FilterSidebar({ filters, onChange }: Props) {
         <button type="button" className="filter-clear" onClick={clearFilters} disabled={!hasActiveFilters(filters)}>
           Clear
         </button>
+      </div>
+
+      <div className="filter-section">
+        <p className="filter-section-title">Favorites</p>
+        <label className="filter-row">
+          <input
+            type="checkbox"
+            checked={filters.favorites}
+            onChange={() => onChange({ ...filters, favorites: !filters.favorites })}
+          />
+          Favorites only
+        </label>
       </div>
 
       <div className="filter-section">

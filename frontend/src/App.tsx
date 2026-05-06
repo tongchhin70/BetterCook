@@ -4,7 +4,6 @@ import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-do
 
 import "./App.css";
 import AboutPage from "./AboutPage";
-import FavoritesPage from "./FavoritesPage";
 import LoginPage from "./LoginPage";
 import Navbar from "./Navbar";
 import RecipesPage from "./RecipesPage";
@@ -283,18 +282,6 @@ function PantryHome({ username }: { username: string | null }) {
     }
   };
 
-  const pantryTotals = items.reduce(
-    (totals, item) => ({
-      calories: totals.calories + item.nutrition.calories * item.quantity,
-      protein: totals.protein + item.nutrition.protein * item.quantity,
-      carbs: totals.carbs + item.nutrition.carbs * item.quantity,
-      fat: totals.fat + item.nutrition.fat * item.quantity,
-      fiber: totals.fiber + item.nutrition.fiber * item.quantity,
-      sodium: totals.sodium + item.nutrition.sodium * item.quantity,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 }
-  );
-
   if (!username) {
     return (
       <main className="pantry-page">
@@ -302,7 +289,7 @@ function PantryHome({ username }: { username: string | null }) {
           <p className="eyebrow">My Pantry</p>
           <h1>What Is In Your Pantry?</h1>
           <p className="subtitle">Login first so your pantry items are saved to your account.</p>
-          <Link to="/login" className="pill-btn">
+          <Link to="/login" className="auth-secondary-btn auth-link-btn">
             Go To Login
           </Link>
         </section>
@@ -371,35 +358,6 @@ function PantryHome({ username }: { username: string | null }) {
         )}
 
         {error && <p className="error-msg">{error}</p>}
-
-        {items.length > 0 && (
-          <div className="pantry-summary" aria-label="Total pantry nutrition">
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{Math.round(pantryTotals.calories)}</span>
-              <span className="pantry-summary-label">kcal</span>
-            </div>
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{pantryTotals.protein.toFixed(1)}g</span>
-              <span className="pantry-summary-label">protein</span>
-            </div>
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{pantryTotals.carbs.toFixed(1)}g</span>
-              <span className="pantry-summary-label">carbs</span>
-            </div>
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{pantryTotals.fat.toFixed(1)}g</span>
-              <span className="pantry-summary-label">fat</span>
-            </div>
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{pantryTotals.fiber.toFixed(1)}g</span>
-              <span className="pantry-summary-label">fiber</span>
-            </div>
-            <div className="pantry-summary-item">
-              <span className="pantry-summary-value">{Math.round(pantryTotals.sodium)}mg</span>
-              <span className="pantry-summary-label">sodium</span>
-            </div>
-          </div>
-        )}
       </section>
 
       {items.length > 0 ? (
@@ -441,7 +399,6 @@ function AppShell() {
         <Route path="/" element={<PantryHome username={username} />} />
         <Route path="/recipes" element={<RecipesPage />} />
         <Route path="/recipes/:recipeId" element={<RecipesPage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage onLoginSuccess={setUsername} />} />
       </Routes>

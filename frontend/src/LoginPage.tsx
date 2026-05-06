@@ -110,7 +110,7 @@ function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
         <button
           type="button"
-          className="pill-btn"
+          className="auth-secondary-btn"
           onClick={() => void submit("/register")}
           disabled={loading}
         >

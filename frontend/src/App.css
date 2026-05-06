@@ -134,6 +134,35 @@ h1 {
   transform: translateY(-1px);
 }
 
+.auth-secondary-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 120ms ease;
+}
+
+.auth-secondary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.auth-secondary-btn:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.auth-link-btn {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+}
+
 .pantry-food-suggestions {
   background: #fff;
   border: 1px solid #f0d7c0;
@@ -211,43 +240,6 @@ h1 {
   font-size: 0.84rem;
   font-weight: 700;
   margin: -4px 0 12px;
-}
-
-.pantry-summary {
-  background: #fff8f3;
-  border: 1px solid #f5e1cf;
-  border-radius: 8px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
-  gap: 8px;
-  margin-top: 14px;
-  padding: 10px;
-}
-
-.pantry-summary-item {
-  background: #fff;
-  border: 1px solid #f0d7c0;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  text-align: center;
-}
-
-.pantry-summary-value {
-  color: var(--accent-strong);
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.pantry-summary-label {
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .food-cards-section {
@@ -494,6 +486,7 @@ h1 {
 }
 
 .recipe-card {
+  position: relative;
   background: #fff;
   border: 0;
   border-radius: 8px;
@@ -507,6 +500,35 @@ h1 {
   min-height: 260px;
   outline: 0;
   transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.recipe-favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ffd7ba;
+  border-radius: 999px;
+  background: #fff8f3;
+  color: var(--accent-strong);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: background 140ms ease, transform 140ms ease, color 140ms ease;
+  z-index: 1;
+}
+
+.recipe-favorite-btn:hover {
+  background: #ffe8d6;
+  transform: scale(1.04);
+}
+
+.recipe-favorite-btn-active {
+  background: #fff0e3;
+  color: #a8380e;
 }
 
 .recipe-card:hover,
@@ -524,7 +546,8 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 46px;
+  padding-right: 36px;
   color: var(--accent-strong);
   font-size: 0.74rem;
   font-weight: 700;
